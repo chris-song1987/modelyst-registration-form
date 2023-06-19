@@ -37,7 +37,7 @@ const Select = ({
       control={control}
       rules={rules}
       render={({ field }) => (
-        <FormControl sx={{ m: 1, minWidth: 120 }} error={error}>
+        <FormControl error={error}>
           <InputLabel id={`select-helper-label-${name}`}>{label}</InputLabel>
           <MUISelect
             labelId={`select-helper-label-${name}`}
