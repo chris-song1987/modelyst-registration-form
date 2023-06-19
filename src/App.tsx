@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
@@ -33,22 +33,32 @@ function RegistrationForm() {
     formState: { errors },
   } = useForm<FormType>();
   const { innerDiameter, outerDiameter } = watch();
-  const [userArray, setUserArray] = useState<Option[]>([
-    { value: "a", label: "a" },
-    { value: "b", label: "b" },
-  ]);
-
-  const { isLoading, error, data, isFetching } = useQuery(
-    "get-users",
-    getUsers
-  );
+  const {
+    isLoading,
+    error,
+    data: usersData,
+    isFetching,
+  } = useQuery("get-users", getUsers);
   // isLoading -> use on Submit button
-  // data -> userArray
+  // TODO: Error handling if "error" object is not null
 
-  const { mutate } = useMutation(addSampleData);
+  const userArray: Option[] = useMemo(() => {
+    // convert usersData here
+    return [
+      { value: "a", label: "a" },
+      { value: "b", label: "b" },
+    ];
+  }, [usersData]);
+
+  const { mutate, error: mutationError } = useMutation(addSampleData);
+  // TODO: Error handling if "mutationError" object is not null
 
   const onSubmit = (data: FormType) => {
-    mutate(data);
+    mutate({
+      ...data,
+      innerDiameter: parseFloat(data.innerDiameter),
+      outerDiameter: parseFloat(data.outerDiameter),
+    });
   };
 
   return (
