@@ -15,14 +15,23 @@ import type { Option } from "./components/Select/Select.component";
 import Select from "./components/Select/Select.component";
 import { getUsers } from "./api/userApi";
 import { addSampleData } from "./api/registrationApi";
+import { UserType } from "./User";
 
 export type FormType = {
   user: string;
-  sampleLabels: string;
-  proposalNumber: string;
+  label: string;
+  proposals: string;
   innerDiameter: string;
   outerDiameter: string;
 };
+
+const formDefaultValues = {
+  user: "",
+  label: "",
+  proposals: "",
+  innerDiameter: "",
+  outerDiameter: ""
+}
 
 function RegistrationForm() {
   const {
@@ -30,34 +39,46 @@ function RegistrationForm() {
     register,
     handleSubmit,
     watch,
+    reset,
+    setError,
     formState: { errors },
-  } = useForm<FormType>();
+  } = useForm<FormType>({
+    defaultValues: formDefaultValues
+  });
   const { innerDiameter, outerDiameter } = watch();
   const {
     isLoading,
     error,
     data: usersData,
-    isFetching,
-  } = useQuery("get-users", getUsers);
+  } = useQuery<UserType[], Error>("get-users", getUsers);
   // isLoading -> use on Submit button
   // TODO: Error handling if "error" object is not null
 
   const userArray: Option[] = useMemo(() => {
-    // convert usersData here
-    return [
-      { value: "a", label: "a" },
-      { value: "b", label: "b" },
-    ];
+    return (usersData || []).map((u: UserType) => ({
+      value: u.id.toString(),
+      label: u.name
+    }));
   }, [usersData]);
 
-  const { mutate, error: mutationError } = useMutation(addSampleData);
-  // TODO: Error handling if "mutationError" object is not null
+  const { mutate } = useMutation(addSampleData);
 
   const onSubmit = (data: FormType) => {
     mutate({
       ...data,
+      user: parseInt(data.user),
       innerDiameter: parseFloat(data.innerDiameter),
       outerDiameter: parseFloat(data.outerDiameter),
+    }, {
+      onSuccess: () => {
+        reset(formDefaultValues);
+      },
+      onError: (error: any) => {
+        const data = error?.response?.data
+        if (data.code === "duplicate_label") {
+          setError("label", { type: "custom", message: data.message })
+        }
+      }
     });
   };
 
@@ -69,8 +90,8 @@ function RegistrationForm() {
       <Box
         sx={{
           display: "flex",
-          "flex-direction": "column",
-          "row-gap": 20,
+          flexDirection: "column",
+          rowGap: 2,
           width: "100%",
           m: 5,
         }}
@@ -87,17 +108,17 @@ function RegistrationForm() {
         <TextField
           label="Sample Labels *"
           variant="outlined"
-          {...register("sampleLabels", { required: true })}
-          error={!!errors.sampleLabels}
-          helperText={errors.sampleLabels ? "Sample Labels is required!" : ""}
+          {...register("label", { required: true })}
+          error={!!errors.label}
+          helperText={errors.label ? errors.label.type === "required" ? "Sample Labels is required!" : errors.label.message : ""}
         />
         <TextField
           label="Proposal Number *"
           variant="outlined"
-          {...register("proposalNumber", { required: true })}
-          error={!!errors.proposalNumber}
+          {...register("proposals", { required: true })}
+          error={!!errors.proposals}
           helperText={
-            errors.proposalNumber ? "Proposal Number is required!" : ""
+            errors.proposals ? "Proposal Number is required!" : ""
           }
         />
         <TextField
@@ -150,10 +171,8 @@ function RegistrationForm() {
           error={!!errors.outerDiameter}
           helperText={errors.outerDiameter && errors.outerDiameter?.message}
           inputProps={{
-            inputProps: {
-              min: 0,
-              step: 1,
-            },
+            min: 0,
+            step: 1,
           }}
         />
 

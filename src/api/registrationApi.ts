@@ -1,15 +1,15 @@
 import axiosInst from "./config/axiosConfig";
 
 export type SampleDataType = {
-  user: string;
-  sampleLabels: string;
-  proposalNumber: string;
+  user: number;
+  label: string;
+  proposals: string;
   innerDiameter: number;
   outerDiameter: number;
 };
 
 export const addSampleData = (data: SampleDataType) => {
-  return axiosInst.post("/beta/add-sample-data", {
+  return axiosInst.post("/register", {
     ...data,
   });
 };
